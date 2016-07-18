@@ -1,0 +1,10 @@
+let
+	type A = array of string
+	type V = array of A
+	var a:=V[10] of A[10] of "hola"
+in
+	for i:=0 to 9 do
+		for j:=0 to 9 do
+			(print(a[i][j]); print("\n"));
+	0
+end

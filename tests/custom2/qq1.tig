@@ -1,0 +1,13 @@
+let
+	function f1(i1: int)=
+	let function f2(i2: int)=
+		let function f3(i3: int)=
+			let function f4(i4: int)=
+				let function f5(i5: int)=
+					(print(chr(ord("A")+i1+i2+i3+i4+i5));
+					print("\n"))
+				in f5(1) end
+			in f4(2) end
+		in f3(3) end
+	in f2(4) end
+in f1(5); 0 end
