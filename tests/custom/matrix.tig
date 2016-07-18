@@ -1,0 +1,278 @@
+let
+    /************************/
+    /* Funciones auxiliares */
+    /************************/
+    
+    /* Obtiene el modulo de la division */
+    function mod(p: int, q: int): int = 
+        if p < q
+        then p
+        else mod( p - q, q )    
+        
+    /* Agrega espacios a la derecha de una cadena hasta
+       alcanzar la longitud deseada */
+    function padRight(s: string, l: int): string =
+        if size(s) < l
+        then padRight( concat(s, " "), l )
+        else s
+        
+    /* Pasa un entero a string */
+    function intToString(i: int): string =
+        let 
+            /* Pasa un digito a string */  
+            function digitToString(i: int): string = chr( ord("0") + i )
+        in
+            if i < 0 
+            then concat( "-", intToString( (-1) * i ) )
+            else if i < 10
+                 then digitToString( i )
+                 else concat( intToString( i / 10 ), digitToString( mod( i, 10 ) ) )
+        end        
+                
+    /************/
+    /* Matrices */
+    /************/
+    
+    type Row = array of int
+    type Data = array of Row
+    type Matrix = {data: Data, cols: int, rows: int}
+    
+    /* Crea una nueva matriz de las dimensiones especificadas y la llena con 
+       el elemento pasado */
+    function newMatrix(r: int, c: int, v: int): Matrix = 
+        /* El compilador llama internamente a la funcion de runtime "_initArray"
+           que inicializa el arreglo con el valor dado.
+           Si construyeramos simplemente una matriz con 'Data[r] of Row[c]' 
+           tendriamos r punteros a la misma fila, con lo cual cambiar un elemento de una
+           fila provocaria que se cambie en todas.
+           Para arreglar esto, hay que recorrer el arreglo de filas y crear
+           explicitamente cada fila  */
+        let 
+            var m: Matrix := nil
+        in   
+            m := Matrix{ data = Data[r] of Row[c] of 0,
+                         cols = c,
+                         rows = r
+                 };
+            for i := 0 to r do (
+                m.data[i] := Row[c] of v
+            );
+            m
+        end
+    
+    /* Obtiene el elemento pedido de la matriz */
+    function get(m: Matrix, i: int, j: int): int = m.data[i][j]
+    
+    /* Setea el valor indicado en la posicion indicada de la matriz */
+    function set(m: Matrix, i: int, j: int, v: int) = m.data[i][j] := v
+    
+    /* Obtiene el numero de filas de la matriz */
+    function getNumRows(m: Matrix): int = m.rows
+    
+    /* Obtiene el numero de columnas de la matriz */
+    function getNumCols(m: Matrix): int = m.cols
+        
+    /* Pasa una matriz a string */
+    function matToString(m: Matrix): string =
+        let
+            /* Variable que contiene la representacion de la matriz como cadena */
+            var s := ""
+        in
+            for i := 0 to (m.rows - 1) do (
+                for j := 0 to (m.cols - 1) do (
+                    s := concat(s, padRight( intToString( m.data[i][j] ), 5 ) )
+                );
+                s := concat(s, "\n")
+            );
+            s
+        end
+   
+    /* Devuelve una copia de la matriz dada */
+    function copy(m: Matrix): Matrix =
+        let
+            var res := newMatrix( m.rows, m.cols, 0 )
+        in
+            for i := 0 to (m.rows - 1) do (
+                for j := 0 to (m.cols - 1) do (
+                    res.data[i][j] := m.data[i][j]
+                )
+            );
+            res
+        end
+        
+    /* Operaciones entre matrices */
+    
+    /* Suma dos matrices y devuelve la matriz resultado */
+    function add(m1: Matrix, m2: Matrix): Matrix = 
+        let
+            var m: Matrix := newMatrix( m1.rows, m1.cols, 0 )
+        in
+            for i := 0 to (m.rows - 1) do (
+                for j := 0 to (m.cols - 1) do (
+                    m.data[i][j] := m1.data[i][j] + m2.data[i][j]
+                )
+            );
+            m
+       end
+    
+    /* Multiplica dos matrices y devuelve la matriz resultado */
+    function mult(m1: Matrix, m2: Matrix): Matrix = 
+        let
+            var m: Matrix := newMatrix( m1.rows, m2.cols, 0 )
+            var val := 0
+        in
+            for i := 0 to (m.rows - 1) do (
+                for j := 0 to (m.cols - 1) do (
+                    val := 0;
+                    for k := 0 to (m1.cols - 1) do (
+                        val := val + m1.data[i][k] * m2.data[k][j]
+                    );
+                    m.data[i][j] := val
+                )
+            );
+            m
+        end
+    
+    /* Multiplica la matriz por un escalar y devuelve la matriz resultado */
+    function prodByScalar(m: Matrix, x: int): Matrix =
+        let
+            var res := newMatrix( m.rows, m.cols, 0 )
+        in
+            for i := 0 to (res.rows - 1) do (
+                for j := 0 to (res.cols - 1) do (
+                    res.data[i][j] := m.data[i][j] * x
+                )
+            );
+            res         
+        end
+        
+    /* Aplica division entera por el escalar dado a todos los elementos
+       de la matriz y devuelve la matriz resultado */
+    function divByScalar(m: Matrix, x: int): Matrix =
+        let
+            var res := newMatrix( m.rows, m.cols, 0 )
+        in
+            for i := 0 to (res.rows - 1) do (
+                for j := 0 to (res.cols - 1) do (
+                    print("Dividiendo ");
+                    print( intToString( m.data[i][j] ) );
+                    print(" y ");
+                    print( intToString( x ) );
+                    print("\n");
+                    res.data[i][j] := m.data[i][j] / x
+                )
+            );
+            res         
+        end
+                
+    /* Devuelve la matriz transpuesta */
+    function transpose(m: Matrix): Matrix =
+        let
+            var res := newMatrix( m.cols, m.rows, 0 )
+        in
+            for i := 0 to (m.cols - 1) do (
+                for j := 0 to (m.rows - 1) do (
+                    res.data[i][j] := m.data[j][i]
+                )
+            );
+            res          
+        end
+    
+    /* Devuelve el determinante de una matriz */
+    function det(m: Matrix): int =
+        let
+            var res := 0
+        in
+            if m.rows = 2 & m.cols = 2
+            then m.data[0][0] * m.data[1][1] - m.data[1][0] * m.data[0][1]
+            else if m.rows = 1 & m.cols = 1 
+                 then m.data[0][0]
+                 else (for j := 0 to m.cols do (
+                           res := res + m.data[0][j] * minor( m, 0, j )      
+                       );
+                       res)
+        end
+        
+    /* Devuelve la matriz obtenido al remover la fila y la columna especificadas. */
+    function minorMat(m: Matrix, p: int, q: int): Matrix =
+        let
+            var res := newMatrix( m.rows - 1, m.cols - 1, 0 )
+            var a := 0
+            var b := 0
+        in
+            for i := 0 to (m.rows - 1) do (
+                if i <> p
+                then (for j := 0 to (m.cols - 1) do (
+                         if j <> q
+                         then (res.data[a][b] := m.data[i][j];
+                               b := b + 1)
+                      );
+                      b := 0;
+                      a := a + 1)
+            );
+            res
+        end
+    
+    /* Calcula el menor indicado de la matriz */
+    function minor(m: Matrix, p: int, q: int): int =
+        let
+            var sign := if mod( p + q, 2 ) = 0
+                        then 1
+                        else -1
+        in
+            sign * det( minorMat( m, p, q ) )
+        end
+        
+    /* Devuelve la matriz adjunta, es decir la matriz cuyo elemento (i, j)
+       es el menor (i, j) de la matriz original */
+    function adj(m: Matrix): Matrix = 
+        let
+            var res := newMatrix( m.cols, m.rows, 0)
+        in
+            for i := 0 to (m.rows - 1) do (
+                for j := 0 to (m.cols - 1) do (
+                    res.data[i][j] := minor( m, i, j )
+                )
+            );
+            res
+        end
+        
+    /* Devuelve la inversa de una matriz. Dado que las matrices son
+       de enteros, las unicas inversas que tendran sentido son las
+       de matrices cuyos determinantes sea 1 o -1 */
+    function inverse(m: Matrix): Matrix =
+        let
+            var adjoint := adj( m )
+            var determinant := det( m )
+        in
+            print( concat( "Determinante: ", intToString( determinant ) ) ); print("\n");
+            print( concat( "Adjunto: ", matToString( adjoint ) ) ); print("\n");
+            divByScalar( transpose( adjoint ), determinant )
+        end
+        
+    /* Matrices de ejemplo */
+    var m: Matrix := newMatrix(3, 3, 0)
+    var m2: Matrix := newMatrix(4, 3, 6)
+    var m3: Matrix := newMatrix(3, 3, 0)
+in
+    /*
+    set(m, 0, 0, 5); set(m, 1, 1, 6); set(m, 2, 2, 7); set(m, 2, 1, 8); set(m, 1, 2, 3);
+    print( concat("Matriz original:\n", matToString( m ) ) );
+    print( concat("Determinante:\n", intToString( det( m ) ) ) ); print("\n");
+    print( concat("Matriz 2 original:\n", matToString( m2 ) ) );
+    print( concat("Matriz 2 x Matriz 2 traspuesta:\n", matToString( mult( m2, transpose( m2 ) ) ) ) ); print("\n");
+    */
+    for i := 0 to 2 do (
+        for j := 0 to 2 do (
+            if i < j
+            then m3.data[i][j] := i + j
+            else if i = j
+                 then m3.data[i][j] := 1
+                 else m3.data[i][j] := 0
+        )
+    );
+    
+    print( concat("Matriz 3 original:\n", matToString( m3 ) ) );
+    print( concat("Matriz 3 inversa:\n", matToString( inverse( m3 ) ) ) );
+    0
+end

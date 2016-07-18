@@ -1,0 +1,48 @@
+let
+    /* Variable que guarda el texto leido de stdin */
+    var text := ""                      
+        
+    /* Pasa la string recibida a upper case */
+    function toUpper(s: string): string =
+        let
+            /* Primer elemento de una string */
+            function hd(s: string): string = substring(s, 0, 1)
+            
+            /* Cola de una string */
+            function tl(s: string): string = substring(s, 1, size(s) - 1)
+                            
+            /* Pasa el caracter recibido (i.e string de longitud 1) a upper case */
+            function toUpperChar(s: string): string = 
+                let
+                    /* Devuelve 1 si el caracter (i.e string de longitud 1) 
+                       pasado corresponde a un caracter en lower case */
+                    function isLowChar(s: string): int = (ord("a") <= ord(s) & ord(s) <= ord("z"))                   
+                in
+                    if isLowChar(s) 
+                    then chr( ord(s) + ord("A") - ord("a") )
+                    else s        
+                end
+        in
+            if s = "" 
+            then s
+            else concat( toUpperChar( hd(s) ), toUpper( tl(s) ) )
+        end
+        
+    /* Lee el texto de entrada estandar */
+    function readInput(): string = 
+        let
+            var c := ""
+            var s := ""
+        in
+            c := getchar();
+            while c <> "" do (
+                s := concat(s, c);
+                c := getchar()
+            );
+            s
+        end
+in
+    text := readInput(); 
+    print( toUpper( text ) );
+    0
+end
